@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "870823498443",
+    "project_id": "aisyiyah-smart-life",
+    "storage_bucket": "aisyiyah-smart-life.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:870823498443:android:4feeea54db93e5a03bc14e",
+        "android_client_info": {
+          "package_name": "com.example.aisyiyah_smartlife"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "870823498443-hmj53m9hrpne48kqjs372dl1irjn6r2s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAEhfCvEaZG7_xitsChK4t-d3Xo7nvLysQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "870823498443-hmj53m9hrpne48kqjs372dl1irjn6r2s.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "870823498443-h28c0acqf4k1f4mc7vgvloer9s50ivi6.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.aisyiyahSmartlife"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
