@@ -7,7 +7,7 @@ import 'package:aisyiyah_smartlife/data/services/google_auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-
+//74% covered
 // 1. MOCKS
 class MockLoginAuthRepository extends Mock implements LoginAuthRepository {}
 class MockLoginUiHandler extends Mock implements LoginUiHandler {}
@@ -169,3 +169,4 @@ void main() {
     });
   });
 }
+
