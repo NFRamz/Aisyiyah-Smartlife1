@@ -8,13 +8,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-// 1. MOCKS & FAKES
+// 1. MOCKS & FAKES (Test Double: Mock & Fake)
+// Mock: Digunakan untuk verifikasi interaksi dan stubbing perilaku.
 class MockLoginAuthRepository extends Mock implements LoginAuthRepository {}
 class MockLoginUiHandler extends Mock implements LoginUiHandler {}
 class MockGoogleAuthService extends Mock implements GoogleAuthService {}
 class MockUser extends Mock implements User {}
 class MockGoogleSignInAccount extends Mock implements GoogleSignInAccount {}
 class MockAuthResponse extends Mock implements AuthResponse {}
+
+// Fake: Objek palsu dengan implementasi minimal untuk memenuhi ketergantungan tipe.
 class FakeGoogleSignInAccount extends Fake implements GoogleSignInAccount {}
 
 void main() {
@@ -51,12 +54,14 @@ void main() {
   });
 
   group('LoginController - handleLogin Branches', () {
+    // test case 1: Menguji agar fungsi login tidak berjalan jika status masih loading.
     test('isLoading return early', () async {
       controller.isLoading.value = true;
       await controller.handleLogin();
       verifyNever(() => mockAuthRepository.signInWithPassword(any(), any()));
     });
 
+    // test case 2: Memastikan muncul snackbar peringatan jika email atau password tidak diisi.
     test('Validasi - Email kosong atau Password kosong', () async {
       controller.emailController.text = '';
       controller.passwordController.text = '123';
@@ -69,6 +74,7 @@ void main() {
       verify(() => mockUiHandler.showSnackbar(any(), 'Email dan password harus diisi', any())).called(2);
     });
 
+    // test case 3: Memastikan validasi format email berfungsi (menggunakan GetUtils.isEmail).
     test('Validasi - Format email salah', () async {
       controller.emailController.text = 'bukan-email';
       controller.passwordController.text = '123';
@@ -76,6 +82,7 @@ void main() {
       verify(() => mockUiHandler.showSnackbar(any(), 'Format email tidak valid', any())).called(1);
     });
 
+    // test case 4: Menguji kondisi ketika akun masih dalam masa blokir (lockout).
     test('Lockout - Masih terblokir', () async {
       controller.emailController.text = 'test@a.com';
       controller.passwordController.text = '123';
@@ -84,6 +91,7 @@ void main() {
       verify(() => mockUiHandler.showSnackbar('Terblokir', any(), any())).called(1);
     });
 
+    // test case 5: Memastikan sistem meriset percobaan gagal jika masa blokir sudah lewat.
     test('Lockout - Blokir berakhir (Reset percobaan)', () async {
       controller.emailController.text = 'test@a.com';
       controller.passwordController.text = '123';
@@ -97,6 +105,7 @@ void main() {
       expect(controller.lockoutUntil.value, null);
     });
 
+    // test case 6: Menangani kegagalan login (AuthException) dan mencatat jumlah percobaan.
     test('AuthException - Penanganan gagal login (attempts < 3)', () async {
       controller.emailController.text = 'test@a.com';
       controller.passwordController.text = '123';
@@ -107,6 +116,7 @@ void main() {
       expect(controller.failedAttempts.value, 1);
     });
 
+    // test case 7: Memicu status terblokir (lockout) setelah mencapai batas 3x percobaan gagal.
     test('AuthException - Mencapai 3 percobaan (Pemicu Lockout)', () async {
       controller.emailController.text = 'test@a.com';
       controller.passwordController.text = '123';
@@ -119,6 +129,7 @@ void main() {
       verify(() => mockUiHandler.showSnackbar('Terblokir', any(), any())).called(1);
     });
 
+    // test case 8: Menangani skenario di mana respon user dari database bernilai null.
     test('User null setelah login', () async {
       controller.emailController.text = 'test@a.com';
       controller.passwordController.text = '123';
@@ -128,6 +139,7 @@ void main() {
       verify(() => mockUiHandler.showSnackbar('Gagal Login', 'User tidak ditemukan.', any())).called(1);
     });
 
+    // test case 9: Menangani kondisi di mana user ada namun profil database tidak ditemukan.
     test('Profile null setelah login', () async {
       final user = MockUser();
       when(() => user.id).thenReturn('u1');
@@ -140,6 +152,7 @@ void main() {
       verify(() => mockUiHandler.showSnackbar('Gagal Login', 'Profil pengguna tidak ditemukan.', any())).called(1);
     });
 
+    // test case 10: Menguji ketahanan kode (null-safety) saat beberapa field profil bernilai null.
     test('Success - Profile dengan banyak field null (Test operator ??)', () async {
       final user = MockUser();
       when(() => user.id).thenReturn('u1');
@@ -165,6 +178,7 @@ void main() {
       verify(() => mockUiHandler.navigateToHome()).called(1);
     });
 
+    // test case 11: Menangani error sistem yang tidak terduga (General Exception).
     test('Catch-all Exception', () async {
       controller.emailController.text = 'test@a.com';
       controller.passwordController.text = '123';
@@ -176,18 +190,21 @@ void main() {
   });
 
   group('LoginController - signInWithGoogle Branches', () {
+    // test case 12: Menguji agar Google Sign-In tidak berjalan ganda saat status loading.
     test('isLoading return early', () async {
       controller.isLoading.value = true;
       await controller.signInWithGoogle();
       verifyNever(() => mockGoogleAuthService.signInWithGoogle());
     });
 
+    // test case 13: Menangani kondisi saat pengguna membatalkan dialog pemilihan akun Google.
     test('Google - User membatalkan login (null)', () async {
       when(() => mockGoogleAuthService.signInWithGoogle()).thenAnswer((_) async => null);
       await controller.signInWithGoogle();
       verifyNever(() => mockGoogleAuthService.loginToSupabase(any()));
     });
 
+    // test case 14: Menangani kegagalan saat menukarkan token Google ke sesi Supabase.
     test('Google - User Supabase null', () async {
       final gAcc = MockGoogleSignInAccount();
       final res = MockAuthResponse();
@@ -199,6 +216,7 @@ void main() {
       verify(() => mockUiHandler.showSnackbar('Gagal Login', any(), any())).called(1);
     });
 
+    // test case 15: Mengarahkan pengguna baru ke halaman Signup jika profil belum ada.
     test('Google - isNewUser logic (profile null)', () async {
       final gAcc = MockGoogleSignInAccount();
       final res = MockAuthResponse();
@@ -215,6 +233,7 @@ void main() {
       verify(() => mockUiHandler.navigateToSignup(any())).called(1);
     });
 
+    // test case 16: Deteksi pengguna baru jika nama_depan masih bernilai default "user".
     test('Google - isNewUser logic (nama_depan "user")', () async {
       final gAcc = MockGoogleSignInAccount();
       final res = MockAuthResponse();
@@ -231,6 +250,7 @@ void main() {
       verify(() => mockUiHandler.navigateToSignup(any())).called(1);
     });
 
+    // test case 17: Deteksi pengguna baru jika field nama_depan kosong.
     test('Google - isNewUser logic (nama_depan kosong)', () async {
       final gAcc = MockGoogleSignInAccount();
       final res = MockAuthResponse();
@@ -247,6 +267,7 @@ void main() {
       verify(() => mockUiHandler.navigateToSignup(any())).called(1);
     });
 
+    // test case 18: Alur sukses login Google untuk pengguna yang sudah terdaftar lengkap.
     test('Google - User lama (Success path)', () async {
       final gAcc = MockGoogleSignInAccount();
       final res = MockAuthResponse();
@@ -262,6 +283,7 @@ void main() {
       verify(() => mockUiHandler.navigateToHome()).called(1);
     });
 
+    // test case 19: Menangani error pada saat proses Google Sign-In berlangsung.
     test('Google - Catch Error', () async {
       when(() => mockGoogleAuthService.signInWithGoogle()).thenThrow(Exception('Google Error'));
       await controller.signInWithGoogle();
@@ -270,6 +292,7 @@ void main() {
   });
 
   group('Cakupan (Coverage) Ekstra', () {
+    // test case 20: Memastikan getter, fungsi cleanup (onClose), dan kelas produksi tereksekusi.
     test('Getters, Dispose & Production Classes', () async {
       // Lazy Getters
       final dc = LoginController();
